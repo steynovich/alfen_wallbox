@@ -1744,7 +1744,8 @@ class AlfenSensor(AlfenEntity, SensorEntity):
         ):
             startDate = datetime.datetime.strptime(startDate, "%Y-%m-%d %H:%M:%S")
             mvDate = datetime.datetime.strptime(mvDate, "%Y-%m-%d %H:%M:%S")
-            stopDate = datetime.datetime.strptime(stopDate, "%Y-%m-%d %H:%M:%S")
+            if stopDate is not None:
+                stopDate = datetime.datetime.strptime(stopDate, "%Y-%m-%d %H:%M:%S")
 
             # if there is a stopdate greater then startDate, then we are not charging anymore
             if stopDate is not None and stopDate > startDate:

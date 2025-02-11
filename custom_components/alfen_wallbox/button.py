@@ -108,3 +108,7 @@ class AlfenButton(AlfenEntity, ButtonEntity):
         if self.entity_description.url_action == LOGOUT:
             await self.coordinator.device.logout()
             return
+
+        if self.entity_description.key == "reboot_wallbox":
+            await self.coordinator.device.reboot_wallbox()
+            return

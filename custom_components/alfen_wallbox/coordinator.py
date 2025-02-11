@@ -109,7 +109,7 @@ class AlfenCoordinator(DataUpdateCoordinator[None]):
             return False
 
 
-async def options_update_listener(entry: AlfenConfigEntry):
+async def options_update_listener(self, entry: AlfenConfigEntry):
     """Handle options update."""
     coordinator = entry.runtime_data
     coordinator.device.get_static_properties = True

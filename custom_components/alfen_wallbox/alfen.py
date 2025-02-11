@@ -165,7 +165,10 @@ class AlfenDevice:
         if CAT_TRANSACTIONS in self.category_options:
             if self.transaction_counter == 0:
                 await self._get_transaction()
-                self.transaction_counter += 1
+            self.transaction_counter += 1
+
+            if self.transaction_counter > 60:
+                self.transaction_counter = 0
 
         return True
 
@@ -373,6 +376,7 @@ class AlfenDevice:
                 break
 
             for line in lines:
+                # _LOGGER.debug("Line: %s", line)
                 if line is None:
                     transactionLoop = False
                     break
