@@ -1723,6 +1723,11 @@ class AlfenSensor(AlfenEntity, SensorEntity):
         stopDate = None
         lastDate = None
 
+        startDate2 = None
+        mvDate2 = None
+        stopDate2 = None
+        lastDate2 = None
+
         for key, value in self.coordinator.device.latest_tag.items():
             if key[0] == "socket 1" and key[1] == "start" and key[2] == "date":
                 startDate = value
@@ -1737,55 +1742,51 @@ class AlfenSensor(AlfenEntity, SensorEntity):
                 lastDate = value
                 continue
 
+            # socket 2
+            if key[0] == "socket 2" and key[1] == "start" and key[2] == "date":
+                startDate2 = value
+                continue
+            if key[0] == "socket 2" and key[1] == "mv" and key[2] == "date":
+                mvDate2 = value
+                continue
+            if key[0] == "socket 2" and key[1] == "stop" and key[2] == "date":
+                stopDate2 = value
+                continue
+            if key[0] == "socket 2" and key[1] == "last_start" and key[2] == "date":
+                lastDate = value
+                continue
+
         if (
             startDate is not None
             and mvDate is not None
-            and entity_description.key.endswith("_charging_time")
+            and entity_description.key == "custom_transaction_socket_1_charging_time"
         ):
-            startDate = datetime.datetime.strptime(startDate, "%Y-%m-%d %H:%M:%S")
-            mvDate = datetime.datetime.strptime(mvDate, "%Y-%m-%d %H:%M:%S")
-            if stopDate is not None:
-                stopDate = datetime.datetime.strptime(stopDate, "%Y-%m-%d %H:%M:%S")
+            return self._getChargingTime(
+                startDate, mvDate, stopDate, entity_description
+            )
 
-            # if there is a stopdate greater then startDate, then we are not charging anymore
-            if stopDate is not None and stopDate > startDate:
-                return 0
-
-            # return the value in minutes
-            value = round((mvDate - startDate).total_seconds() / 60, 2)
-            if entity_description.round_digits is not None:
-                return round(
-                    value,
-                    (
-                        entity_description.round_digits
-                        if entity_description.round_digits > 0
-                        else None
-                    ),
-                )
-            return value
+        if (
+            startDate2 is not None
+            and mvDate2 is not None
+            and entity_description.key == "custom_transaction_socket_2_charging_time"
+        ):
+            return self._getChargingTime(
+                startDate2, mvDate2, stopDate2, entity_description
+            )
 
         if (
             lastDate is not None
             and stopDate is not None
-            and entity_description.key.endswith("_charged_time")
+            and entity_description.key == "custom_transaction_socket_1_charged_time"
         ):
-            lastDate = datetime.datetime.strptime(lastDate, "%Y-%m-%d %H:%M:%S")
-            stopDate = datetime.datetime.strptime(stopDate, "%Y-%m-%d %H:%M:%S")
+            return self._getChargedTime(lastDate, stopDate, entity_description)
 
-            if stopDate < lastDate:
-                return None
-            # return the value in minutes
-            value = round((stopDate - lastDate).total_seconds() / 60, 2)
-            if entity_description.round_digits is not None:
-                return round(
-                    value,
-                    (
-                        entity_description.round_digits
-                        if entity_description.round_digits > 0
-                        else None
-                    ),
-                )
-            return value
+        if (
+            lastDate2 is not None
+            and stopDate2 is not None
+            and entity_description.key == "custom_transaction_socket_2_charged_time"
+        ):
+            return self._getChargedTime(lastDate2, stopDate2, entity_description)
         return None
 
     def _customTransactionCode(self, socker_number: int):
@@ -1821,6 +1822,48 @@ class AlfenSensor(AlfenEntity, SensorEntity):
             if value is not None:
                 return value
         return None
+
+    def _getChargedTime(self, lastDate, stopDate, entity_description):
+        lastDate = datetime.datetime.strptime(lastDate, "%Y-%m-%d %H:%M:%S")
+        stopDate = datetime.datetime.strptime(stopDate, "%Y-%m-%d %H:%M:%S")
+
+        if stopDate < lastDate:
+            return None
+        # return the value in minutes
+        value = round((stopDate - lastDate).total_seconds() / 60, 2)
+        if entity_description.round_digits is not None:
+            return round(
+                value,
+                (
+                    entity_description.round_digits
+                    if entity_description.round_digits > 0
+                    else None
+                ),
+            )
+        return value
+
+    def _getChargingTime(self, startDate, mvDate, stopDate, entity_description):
+        startDate = datetime.datetime.strptime(startDate, "%Y-%m-%d %H:%M:%S")
+        mvDate = datetime.datetime.strptime(mvDate, "%Y-%m-%d %H:%M:%S")
+        if stopDate is not None:
+            stopDate = datetime.datetime.strptime(stopDate, "%Y-%m-%d %H:%M:%S")
+
+        # if there is a stopdate greater then startDate, then we are not charging anymore
+        if stopDate is not None and stopDate > startDate:
+            return 0
+
+        # return the value in minutes
+        value = round((mvDate - startDate).total_seconds() / 60, 2)
+        if entity_description.round_digits is not None:
+            return round(
+                value,
+                (
+                    entity_description.round_digits
+                    if entity_description.round_digits > 0
+                    else None
+                ),
+            )
+        return value
 
     @property
     def state(self) -> StateType:  # noqa: C901
