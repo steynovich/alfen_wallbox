@@ -137,7 +137,7 @@ class AlfenSwitchSensor(AlfenEntity, SwitchEntity):
         """Return True if entity is on."""
         for prop in self.coordinator.device.properties:
             if prop[ID] == self.entity_description.api_param:
-                return prop[VALUE] == 1 or 3
+                return prop[VALUE] in [1, 3]
 
         return False
 
