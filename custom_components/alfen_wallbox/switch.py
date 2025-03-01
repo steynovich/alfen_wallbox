@@ -44,8 +44,13 @@ ALFEN_BINARY_SENSOR_TYPES: Final[tuple[AlfenSwitchDescription, ...]] = (
     ),
     AlfenSwitchDescription(
         key="lb_solar_charging_boost",
-        name="Solar Charging Boost",
+        name="Solar Charging Boost Socket 1",
         api_param="3280_4",
+    ),
+    AlfenSwitchDescription(
+        key="lb_solar_charging_boost_socket_2",
+        name="Solar Charging Boost Socket 2",
+        api_param="3280_5",
     ),
     AlfenSwitchDescription(
         key="auth_white_list",

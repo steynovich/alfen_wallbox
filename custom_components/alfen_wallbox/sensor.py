@@ -328,15 +328,15 @@ ALFEN_SENSOR_TYPES: Final[tuple[AlfenSensorDescription, ...]] = (
         state_class=SensorDeviceClass.DATE,
         round_digits=None,
     ),
-    # too much logging data
-    # AlfenSensorDescription(
-    #     key="system_date_time",
-    #     name="System Datetime",
-    #     icon="mdi:timer-outline",
-    #     api_param="2059_0",
-    #     unit=None,
-    #     round_digits=None,
-    # ),
+    AlfenSensorDescription(
+        key="system_date_time",
+        name="System Datetime",
+        icon="mdi:timer-outline",
+        api_param="2059_0",
+        unit=None,
+        round_digits=None,
+        state_class=None,
+    ),
     AlfenSensorDescription(
         key="bootups",
         name="Bootups",
@@ -733,6 +733,14 @@ ALFEN_SENSOR_TYPES: Final[tuple[AlfenSensorDescription, ...]] = (
         round_digits=None,
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
+    ),
+    AlfenSensorDescription(
+        key="mobile_weak_signal_threshold",
+        name="Mobile Weak Signal Threshold",
+        icon="mdi:information-outline",
+        api_param="2111_0",
+        unit=None,
+        round_digits=0,
     ),
     # AlfenSensorDescription(
     #     key="comm_dhcp_address_2",
@@ -1169,6 +1177,81 @@ ALFEN_SENSOR_TYPES: Final[tuple[AlfenSensorDescription, ...]] = (
         icon="mdi:clock",
         api_param=None,
         unit=UnitOfTime.MINUTES,
+        round_digits=0,
+    ),
+    AlfenSensorDescription(
+        key="manufacturer_hardware_version",
+        name="Manufacturer Hardware Version",
+        icon="mdi:information-outline",
+        api_param="1009_0",
+        unit=None,
+        round_digits=None,
+    ),
+    AlfenSensorDescription(
+        key="manufacturer_software_version",
+        name="Manufacturer software Version",
+        icon="mdi:information-outline",
+        api_param="100A_0",
+        unit=None,
+        round_digits=None,
+    ),
+    AlfenSensorDescription(
+        key="firmware_version",
+        name="Firmware Version",
+        icon="mdi:information-outline",
+        api_param="2054_0",
+        unit=None,
+        round_digits=None,
+    ),
+    AlfenSensorDescription(
+        key="bootloader_version",
+        name="Bootloader Version",
+        icon="mdi:information-outline",
+        api_param="3182_0",
+        unit=None,
+        round_digits=None,
+    ),
+    AlfenSensorDescription(
+        key="ocpp_boot_last_time_send",
+        name="OCPP Boot Last Time Send",
+        icon="mdi:information-outline",
+        api_param="3600_2",
+        unit=None,
+        round_digits=0,
+    ),
+    AlfenSensorDescription(
+        key="ocpp_boot_accept_time",
+        name="OCPP Boot Accept Time",
+        icon="mdi:information-outline",
+        api_param="3600_3",
+        unit=None,
+        round_digits=0,
+    ),
+    AlfenSensorDescription(
+        key="ocpp_Heartbeat_last_received",
+        name="OCPP Heartbeat Last Received",
+        icon="mdi:information-outline",
+        state_class=None,
+        api_param="3600_6",
+        unit=None,
+        round_digits=0,
+    ),
+    AlfenSensorDescription(
+        key="ocpp_Heartbeat_last_failed",
+        name="OCPP Heartbeat Last Failed",
+        icon="mdi:information-outline",
+        api_param="3600_7",
+        state_class=None,
+        unit=None,
+        round_digits=0,
+    ),
+    AlfenSensorDescription(
+        key="ocpp_Heartbeat_last_sent",
+        name="OCPP Heartbeat Last Sent",
+        icon="mdi:information-outline",
+        api_param="3600_8",
+        state_class=None,
+        unit=None,
         round_digits=0,
     ),
 )
@@ -1988,6 +2071,17 @@ class AlfenSensor(AlfenEntity, SensorEntity):
                     return datetime.datetime.fromtimestamp(prop[VALUE] / 1000).strftime(
                         "%d/%m/%Y %H:%M:%S"
                     )
+                # change milliseconds to HH:MM:SS
+                if self.entity_description.api_param in (
+                    "3600_2",
+                    "3600_3",
+                    "3600_6",
+                    "3600_7",
+                    "3600_8",
+                ):
+                    return datetime.datetime.fromtimestamp(prop[VALUE] / 1000).strftime(
+                        "%H:%M:%S"
+                    )
 
                 # Allowed phase 1 or Allowed Phase 2
                 if (self.entity_description.api_param == "312E_0") | (
@@ -1996,6 +2090,7 @@ class AlfenSensor(AlfenEntity, SensorEntity):
                     return ALLOWED_PHASE_DICT.get(prop[VALUE], "Unknown")
 
                 if self.entity_description.round_digits is not None:
+                    # check prop[VALUE] if it is an integer
                     return round(prop[VALUE], self.entity_description.round_digits)
 
                 # mode3_state

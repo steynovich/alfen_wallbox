@@ -69,6 +69,8 @@ LOAD_BALANCE_RECEIVED_MEASUREMENTS_DICT: Final[dict[str, int]] = {
 }
 
 DISPLAY_LANGUAGE_DICT: Final[dict[str, str]] = {
+    "Catalan": "ca_ES",
+    "Croatian": "hr_HR",
     "Czech": "cz_CZ",
     "Danish": "da_DK",
     "Dutch": "nl_NL",
@@ -79,10 +81,12 @@ DISPLAY_LANGUAGE_DICT: Final[dict[str, str]] = {
     "Hungarian": "hu_HU",
     "Icelandic": "is_IS",
     "Italian": "it_IT",
+    "Latvian": "lv_LV",
     "Norwegian": "no_NO",
     "Polish": "pl_PL",
     "Portuguese": "pt_PT",
     "Romanian": "ro_RO",
+    "Slovak": "sk_SK",
     "Spanish": "es_ES",
     "Swedish": "sv_SE",
 }
