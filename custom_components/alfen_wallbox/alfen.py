@@ -375,6 +375,7 @@ class AlfenDevice:
         offset = self.transaction_offset
         transactionLoop = True
         counter = 0
+        unknownLine = 0
         while transactionLoop:
             response = await self._get(
                 url=self.__get_url("transactions?offset=" + str(offset)),
@@ -485,6 +486,9 @@ class AlfenDevice:
                     else:
                         _LOGGER.debug("Unknown line: %s", str(line))
                         offset = offset + 1
+                        unknownLine += 1
+                        if unknownLine > 2:
+                            transactionLoop = False
                         continue
                 except IndexError:
                     break
