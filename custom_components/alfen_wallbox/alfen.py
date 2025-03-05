@@ -13,6 +13,8 @@ from .const import (
     CAT_TRANSACTIONS,
     CATEGORIES,
     CMD,
+    COMMAND_CLEAR_TRANSACTIONS,
+    COMMAND_REBOOT,
     DEFAULT_TIMEOUT,
     DISPLAY_NAME_VALUE,
     DOMAIN,
@@ -353,8 +355,20 @@ class AlfenDevice:
 
     async def reboot_wallbox(self):
         """Reboot the wallbox."""
-        response = await self._post(cmd=CMD, payload={PARAM_COMMAND: "reboot"})
+        response = await self._post(cmd=CMD, payload={PARAM_COMMAND: COMMAND_REBOOT})
         _LOGGER.debug("Reboot response %s", str(response))
+
+    async def clear_transactions(self):
+        """Clear the transactions."""
+        response = await self._post(
+            cmd=CMD, payload={PARAM_COMMAND: COMMAND_CLEAR_TRANSACTIONS}
+        )
+        _LOGGER.debug("Clear Transactions response %s", str(response))
+
+    async def send_command(self, command):
+        """Run a command."""
+        response = await self._post(cmd=CMD, payload=command)
+        _LOGGER.debug("Run Command response %s", str(response))
 
     async def _get_transaction(self):
         _LOGGER.debug("Get Transaction")

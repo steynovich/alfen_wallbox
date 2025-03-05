@@ -9,6 +9,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     CMD,
+    COMMAND_CLEAR_TRANSACTIONS,
     COMMAND_REBOOT,
     FORCE_UPDATE,
     LOGIN,
@@ -63,6 +64,13 @@ ALFEN_BUTTON_TYPES: Final[tuple[AlfenButtonDescription, ...]] = (
         url_action="Force Update",
         json_data=None,
     ),
+    AlfenButtonDescription(
+        key="clear_transaction",
+        name="Clear Transaction",
+        method=METHOD_POST,
+        url_action=CMD,
+        json_data={PARAM_COMMAND: COMMAND_CLEAR_TRANSACTIONS},
+    ),
 )
 
 
@@ -109,6 +117,6 @@ class AlfenButton(AlfenEntity, ButtonEntity):
             await self.coordinator.device.logout()
             return
 
-        if self.entity_description.key == "reboot_wallbox":
-            await self.coordinator.device.reboot_wallbox()
+        if self.entity_description.json_data is not None:
+            await self.coordinator.device.send_command(self.entity_description.json_data)
             return

@@ -43,6 +43,7 @@ CAT_TEMP = "temp"
 CAT_TRANSACTIONS = "transactions"
 
 COMMAND_REBOOT = "reboot"
+COMMAND_CLEAR_TRANSACTIONS = "txerase"
 
 CONF_REFRESH_CATEGORIES = "refresh_categories"
 
