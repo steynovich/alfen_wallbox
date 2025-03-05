@@ -142,7 +142,7 @@ MODE_3_STAT_DICT: Final[dict[int, str]] = {
     194: "STATE_C2",
     209: "STATE_D1",
     210: "STATE_D2",
-    14: "STATE_E",
+    224: "STATE_E",
     240: "STATE_F",
 }
 
