@@ -335,7 +335,7 @@ ALFEN_SENSOR_TYPES: Final[tuple[AlfenSensorDescription, ...]] = (
         api_param="2059_0",
         unit=None,
         round_digits=None,
-        state_class=None,
+        state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     AlfenSensorDescription(
         key="bootups",
