@@ -1,5 +1,6 @@
 """Class representing a Alfen Wallbox update coordinator."""
 
+import asyncio
 from asyncio import timeout
 from datetime import timedelta
 import logging
@@ -79,10 +80,15 @@ class AlfenCoordinator(DataUpdateCoordinator[None]):
 
     async def _async_update_data(self) -> None:
         """Fetch data from API endpoint."""
-
-        async with timeout(self.timeout):
-            if not await self.device.async_update():
-                raise UpdateFailed("Error updating")
+        try:
+            async with timeout(self.timeout):
+                if not await self.device.async_update():
+                    raise UpdateFailed("Error updating")
+        except TimeoutError:
+            _LOGGER.debug("Update from %s timed out", self.entry.data[CONF_HOST])
+            # wait for next update
+            # await for 60 seconds to avoid flooding the API
+            await asyncio.sleep(60)
 
     async def async_connect(self) -> bool:
         """Connect to the API endpoint."""

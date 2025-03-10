@@ -41,6 +41,7 @@ CAT_TEMP = "temp"
 # CAT_LEDS = "leds"
 # CAT_ACCELERO = "accelero"
 CAT_TRANSACTIONS = "transactions"
+CAT_LOGS = "logs"
 
 COMMAND_REBOOT = "reboot"
 COMMAND_CLEAR_TRANSACTIONS = "txerase"
@@ -59,6 +60,7 @@ DEFAULT_REFRESH_CATEGORIES = (
     CAT_OCPP,
     CAT_STATES,
     CAT_TEMP,
+    CAT_LOGS,
 )
 
 CATEGORIES = (
@@ -74,6 +76,7 @@ CATEGORIES = (
     CAT_STATES,
     CAT_TEMP,
     CAT_TRANSACTIONS,
+    CAT_LOGS,
 )
 
 # CONF_GENERIC = "get_generic"

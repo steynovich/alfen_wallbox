@@ -1,5 +1,6 @@
 """Alfen Wallbox API."""
 
+import asyncio
 import datetime
 import json
 import logging
@@ -10,6 +11,7 @@ from aiohttp import ClientResponse, ClientSession
 from .const import (
     ALFEN_PRODUCT_MAP,
     CAT,
+    CAT_LOGS,
     CAT_TRANSACTIONS,
     CATEGORIES,
     CMD,
@@ -79,6 +81,9 @@ class AlfenDevice:
         self.last_updated = None
         self.logs = []
         self.latest_log_id = None
+        # prevent multiple call to wallbox
+        self.lock = False
+        self.update_values = []
 
     async def init(self) -> bool:
         """Initialize the Alfen API."""
@@ -146,6 +151,28 @@ class AlfenDevice:
         if self.keep_logout:
             return True
 
+        # we update first the self.update_values
+        for update in self.update_values:
+            response = await self._update_value(update["api_param"], update["value"])
+
+            if response:
+                # we expect that the value is updated so we are just update the value in the properties
+                for index, prop in enumerate(self.properties):
+                    if prop[ID] == update["api_param"]:
+                        _LOGGER.debug(
+                            "Set %s value %s",
+                            str(update["api_param"]),
+                            str(update["value"]),
+                        )
+                        prop[VALUE] = update["value"]
+                        self.properties[index] = prop
+                        break
+                # remove the update from the list
+                self.update_values.remove(update)
+        # if we still have value to update, we return True
+        if self.update_values:
+            return True
+
         self.last_updated = datetime.datetime.now()
         dynamic_properties = []
         self.properties = []
@@ -153,7 +180,7 @@ class AlfenDevice:
             self.static_properties = []
 
         for cat in CATEGORIES:
-            if cat == CAT_TRANSACTIONS:
+            if cat in (CAT_TRANSACTIONS, CAT_LOGS):
                 continue
             if cat in self.category_options:
                 dynamic_properties = (
@@ -173,7 +200,8 @@ class AlfenDevice:
 
             if self.transaction_counter > 60:
                 self.transaction_counter = 0
-        await self._get_log()
+        if CAT_LOGS in self.category_options:
+            await self._get_log()
         return True
 
     async def _post(
@@ -183,7 +211,11 @@ class AlfenDevice:
         if self.keep_logout:
             return None
 
+        if self.lock:
+            return None
+
         try:
+            self.lock = True
             _LOGGER.debug("Send Post Request")
             async with self._session.post(
                 url=self.__get_url(cmd),
@@ -193,11 +225,13 @@ class AlfenDevice:
                 ssl=self.ssl,
             ) as response:
                 if response.status == 401 and allowed_login:
+                    self.lock = False
                     self.logged_in = False
                     _LOGGER.debug("POST with login")
                     await self.login()
                     return await self._post(cmd, payload, False)
                 response.raise_for_status()
+                self.lock = False
                 return response
         except json.JSONDecodeError as e:
             # skip tailing comma error from alfen
@@ -206,13 +240,14 @@ class AlfenDevice:
                 return None
 
             _LOGGER.error("JSONDecodeError error on POST %s", str(e))
+            self.lock = False
         except TimeoutError:
             _LOGGER.warning("Timeout on POST")
+            self.lock = False
         except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
             if not allowed_login:
                 _LOGGER.error("Unexpected error on POST %s", str(e))
-
-        return None
+            self.lock = False
 
     async def _get(
         self, url, allowed_login=True, json_decode=True
@@ -221,11 +256,16 @@ class AlfenDevice:
         if self.keep_logout:
             return None
 
+        if self.lock:
+            return None
+
         try:
+            self.lock = True
             async with self._session.get(
                 url, timeout=DEFAULT_TIMEOUT, ssl=self.ssl
             ) as response:
                 if response.status == 401 and allowed_login:
+                    self.lock = False
                     self.logged_in = False
                     _LOGGER.debug("GET with login")
                     await self.login()
@@ -236,13 +276,16 @@ class AlfenDevice:
                     _resp = await response.json(content_type=None)
                 else:
                     _resp = await response.text()
+                self.lock = False
                 return _resp
         except TimeoutError:
             _LOGGER.warning("Timeout on GET")
+            self.lock = False
             return None
         except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
             if not allowed_login:
                 _LOGGER.error("Unexpected error on GET %s", str(e))
+            self.lock = False
             return None
 
     async def login(self):
@@ -287,7 +330,11 @@ class AlfenDevice:
         if self.keep_logout:
             return None
 
+        if self.lock:
+            return None
+
         try:
+            self.lock = True
             async with self._session.post(
                 url=self.__get_url(PROP),
                 json={api_param: {ID: api_param, VALUE: str(value)}},
@@ -297,14 +344,17 @@ class AlfenDevice:
             ) as response:
                 if response.status == 401 and allowed_login:
                     self.logged_in = False
+                    self.lock = False
                     _LOGGER.debug("POST(Update) with login")
                     await self.login()
                     return await self._update_value(api_param, value, False)
                 response.raise_for_status()
+                self.lock = False
                 return response
         except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
             if not allowed_login:
                 _LOGGER.error("Unexpected error on UPDATE VALUE %s", str(e))
+            self.lock = False
             return None
 
     async def _get_value(self, api_param):
@@ -347,8 +397,9 @@ class AlfenDevice:
                 # This only possible in case of series of timeouts or unknown exceptions in self._get()
                 # It's better to break completely, otherwise we can provide partial data in self.properties.
                 _LOGGER.debug("Returning earlier after %s attempts", str(attempt))
-                self.properties = []
                 break
+            else:
+                await asyncio.sleep(5)
 
         _LOGGER.debug("Properties %s", str(properties))
         runtime = datetime.datetime.now() - tx_start
@@ -379,6 +430,8 @@ class AlfenDevice:
             url=self.__get_url("log?offset=" + str(log_offset)),
             json_decode=False,
         )
+        if response is None:
+            return
         index = response.find("_")
         if index == -1 or index >= 20:
             return
@@ -611,15 +664,12 @@ class AlfenDevice:
 
     async def set_value(self, api_param, value):
         """Set a value on the API."""
-        response = await self._update_value(api_param, value)
-        if response:
-            # we expect that the value is updated so we are just update the value in the properties
-            for index, prop in enumerate(self.properties):
-                if prop[ID] == api_param:
-                    _LOGGER.debug("Set %s value %s", str(api_param), str(value))
-                    prop[VALUE] = value
-                    self.properties[index] = prop
-                    break
+        # check if the api_param is already in the update_values, update the value
+        for update in self.update_values:
+            if update["api_param"] == api_param:
+                update["value"] = value
+                return
+        self.update_values.append({"api_param": api_param, "value": value})
 
     async def get_value(self, api_param):
         """Get a value from the API."""
