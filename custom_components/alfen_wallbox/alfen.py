@@ -452,7 +452,7 @@ class AlfenDevice:
                 url=self.__get_url("log?offset=" + str(log_offset)),
                 json_decode=False,
             )
-            if log_offset > 50:
+            if log_offset > 100:
                 break
         # _LOGGER.debug(self.log_offset)
         # reverse the logs order
@@ -500,7 +500,7 @@ class AlfenDevice:
                         self.latest_tag = {}
                     split = message.split("tag: ", 2)
                     self.latest_tag["socket " + socket, "start", "tag"] = split[1]
-                    _LOGGER.warning(self.latest_tag)
+                    # _LOGGER.warning(self.latest_tag)
                 # _LOGGER.debug(message)
 
     async def _get_transaction(self):
@@ -553,7 +553,7 @@ class AlfenDevice:
 
                         if self.latest_tag is None:
                             self.latest_tag = {}
-                        self.latest_tag[socket, "start", "tag"] = tag
+                        # self.latest_tag[socket, "start", "tag"] = tag
                         self.latest_tag[socket, "start", "date"] = date
                         self.latest_tag[socket, "start", "kWh"] = kWh
 
@@ -572,7 +572,7 @@ class AlfenDevice:
 
                         if self.latest_tag is None:
                             self.latest_tag = {}
-                        self.latest_tag[socket, "stop", "tag"] = tag
+                        # self.latest_tag[socket, "stop", "tag"] = tag
                         self.latest_tag[socket, "stop", "date"] = date
                         self.latest_tag[socket, "stop", "kWh"] = kWh
 
