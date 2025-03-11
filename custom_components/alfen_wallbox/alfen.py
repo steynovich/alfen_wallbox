@@ -190,6 +190,9 @@ class AlfenDevice:
                 self.static_properties = (
                     self.static_properties + await self._get_all_properties_value(cat)
                 )
+
+        if CAT_LOGS in self.category_options:
+            await self._get_log()
         self.properties = self.static_properties + dynamic_properties
         self.get_static_properties = False
 
@@ -200,8 +203,7 @@ class AlfenDevice:
 
             if self.transaction_counter > 60:
                 self.transaction_counter = 0
-        if CAT_LOGS in self.category_options:
-            await self._get_log()
+
         return True
 
     async def _post(
@@ -459,6 +461,7 @@ class AlfenDevice:
             # split on \n
             lines = log.splitlines()
             for line in lines:
+                # _LOGGER.debug(line)
                 # get the index of _
                 index = line.find("_")
                 if index == -1 or index >= 20:
@@ -483,7 +486,7 @@ class AlfenDevice:
                 # show the rest of all the index after 5
                 for i in range(7, len(index)):
                     message += ":" + index[i]
-
+                # _LOGGER.debug(message)
                 # if contains 'EV_CONNECTED_AUTHORIZED' then we have a tag
                 # Socket #1: main state: EV_CONNECTED_AUTHORIZED, CP: 8.8/8.9, tag: xxxxxxx
                 if "EV_CONNECTED_AUTHORIZED" in message and "tag:" in message:
@@ -493,10 +496,11 @@ class AlfenDevice:
                         socket = "1"
                     elif "Socket #2" in message:
                         socket = "2"
-                    self.latest_tag["socket " + socket, "start", "tag"] = message.split(
-                        "tag: ", 2
-                    )[1]
-                    # _LOGGER.warning(self.latest_tag)
+                    if self.latest_tag is None:
+                        self.latest_tag = {}
+                    split = message.split("tag: ", 2)
+                    self.latest_tag["socket " + socket, "start", "tag"] = split[1]
+                    _LOGGER.warning(self.latest_tag)
                 # _LOGGER.debug(message)
 
     async def _get_transaction(self):
