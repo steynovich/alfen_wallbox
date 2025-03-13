@@ -147,7 +147,6 @@ class AlfenBinarySensor(AlfenEntity, BinarySensorEntity):
             if "21A2_0" in self.coordinator.device.properties:
                 if self.coordinator.device.properties["21A2_0"][VALUE] == LICENSE_NONE:
                     return
-            _LOGGER.debug(licenses)
             if self.entity_description.key == "license_scn":
                 self._attr_is_on = LICENSE_SCN in licenses
             if self.entity_description.key == "license_active_loadbalancing":

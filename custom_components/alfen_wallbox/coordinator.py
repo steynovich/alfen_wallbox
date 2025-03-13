@@ -89,6 +89,7 @@ class AlfenCoordinator(DataUpdateCoordinator[None]):
             # wait for next update
             # await for 60 seconds to avoid flooding the API
             await asyncio.sleep(60)
+            self.device.lock = False
 
     async def async_connect(self) -> bool:
         """Connect to the API endpoint."""

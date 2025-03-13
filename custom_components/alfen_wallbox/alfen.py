@@ -80,7 +80,7 @@ class AlfenDevice:
         self.logged_in = False
         self.last_updated = None
         self.logs = []
-        self.latest_log_id = None
+        self.latest_logs = []
         # prevent multiple call to wallbox
         self.lock = False
         self.update_values = []
@@ -191,10 +191,11 @@ class AlfenDevice:
                     self.static_properties + await self._get_all_properties_value(cat)
                 )
 
-        if CAT_LOGS in self.category_options:
-            await self._get_log()
         self.properties = self.static_properties + dynamic_properties
         self.get_static_properties = False
+
+        if CAT_LOGS in self.category_options:
+            await self._get_log()
 
         if CAT_TRANSACTIONS in self.category_options:
             if self.transaction_counter == 0:
@@ -271,7 +272,9 @@ class AlfenDevice:
                     self.logged_in = False
                     _LOGGER.debug("GET with login")
                     await self.login()
-                    return await self._get(url, False)
+                    return await self._get(
+                        url=url, allowed_login=False, json_decode=False
+                    )
 
                 response.raise_for_status()
                 if json_decode:
@@ -425,37 +428,37 @@ class AlfenDevice:
         response = await self._post(cmd=CMD, payload=command)
         _LOGGER.debug("Run Command response %s", str(response))
 
-    async def _get_log(self):
-        """Get the log."""
-        log_offset = 0
+    async def _fetch_log(self, log_offset) -> str | None:
+        """Fetch the log."""
         response = await self._get(
             url=self.__get_url("log?offset=" + str(log_offset)),
             json_decode=False,
         )
         if response is None:
-            return
-        index = response.find("_")
-        if index == -1 or index >= 20:
-            return
-        log_id = response[:index]
-        if self.latest_log_id is not None:
-            if self.latest_log_id >= log_id:
-                return
-        else:
-            self.latest_log_id = log_id
+            return None
+        lines = response.splitlines()
 
-        while response:
-            # _LOGGER.debug(response)
-            self.logs.append(response)
+        # we need to get all the log between the self.lastest_log_id and the log_id before we update the self.latest_log_id
+        for line in lines:
+            if self.latest_logs is None:
+                self.latest_logs = []
+            if line in self.latest_logs:
+                continue
+            self.latest_logs.append(line)
+            self.logs.append(line)
+            _LOGGER.debug(line)
+
+        return True
+
+    async def _get_log(self):
+        """Get the log."""
+        log_offset = 0
+
+        while await self._fetch_log(log_offset):
             log_offset += 1
-            response = await self._get(
-                url=self.__get_url("log?offset=" + str(log_offset)),
-                json_decode=False,
-            )
-            if log_offset > 100:
+            if log_offset > 5:
                 break
-        # _LOGGER.debug(self.log_offset)
-        # reverse the logs order
+
         self.logs.reverse()
         for log in self.logs:
             # split on \n
@@ -489,7 +492,11 @@ class AlfenDevice:
                 # _LOGGER.debug(message)
                 # if contains 'EV_CONNECTED_AUTHORIZED' then we have a tag
                 # Socket #1: main state: EV_CONNECTED_AUTHORIZED, CP: 8.8/8.9, tag: xxxxxxx
-                if "EV_CONNECTED_AUTHORIZED" in message and "tag:" in message:
+                if (
+                    "EV_CONNECTED_AUTHORIZED" in message
+                    or "CHARGING_POWER_ON" in message
+                    or "CABLE_CONNECTED" in message
+                ) and "tag:" in message:
                     # check which socket we have
                     socket = ""
                     if "Socket #1" in message:
@@ -500,8 +507,28 @@ class AlfenDevice:
                         self.latest_tag = {}
                     split = message.split("tag: ", 2)
                     self.latest_tag["socket " + socket, "start", "tag"] = split[1]
-                    # _LOGGER.warning(self.latest_tag)
+
+                # disconnect
+                if (
+                    "CHARGING_POWER_OFF" in message
+                    or "CHARGING_TERMINATING" in message
+                ) and "tag:" in message:
+                    # check which socket we have
+                    socket = ""
+                    if "Socket #1" in message:
+                        socket = "1"
+                    elif "Socket #2" in message:
+                        socket = "2"
+                    if self.latest_tag is None:
+                        self.latest_tag = {}
+                    self.latest_tag["socket " + socket, "start", "tag"] = None
+                    _LOGGER.warning(self.latest_tag)
                 # _LOGGER.debug(message)
+        self.logs = []
+
+        # keep only the latest 100 self.latest_logs
+        if len(self.latest_logs) > 100:
+            self.latest_logs = self.latest_logs[-100:]
 
     async def _get_transaction(self):
         _LOGGER.debug("Get Transaction")
