@@ -395,6 +395,10 @@ class AlfenDevice:
 
             if response is not None:
                 attempt = 0
+                # if response is a string, convert it to json
+                if isinstance(response, str):
+                    response = json.loads(response)
+                # merge the properties with response properties
                 properties += response[PROPERTIES]
                 nextRequest = response[TOTAL] > (offset + len(response[PROPERTIES]))
                 offset += len(response[PROPERTIES])
@@ -510,8 +514,7 @@ class AlfenDevice:
 
                 # disconnect
                 if (
-                    "CHARGING_POWER_OFF" in message
-                    or "CHARGING_TERMINATING" in message
+                    "CHARGING_POWER_OFF" in message or "CHARGING_TERMINATING" in message
                 ) and "tag:" in message:
                     # check which socket we have
                     socket = ""
