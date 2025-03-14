@@ -467,15 +467,15 @@ class AlfenDevice:
         for log in self.logs:
             # split on \n
             lines = log.splitlines()
-            for line in lines:
+            for linerec in lines:
                 # _LOGGER.debug(line)
                 # get the index of _
-                index = line.find("_")
+                index = linerec.find("_")
                 if index == -1 or index >= 20:
                     continue
-                id = line[:index]
+                line_id = linerec[:index]
                 # substring on : so we get the date and time
-                line = line[index + 1 :]
+                line = linerec[index + 1 :]
                 index = line.split(":")
                 # if we have less then 7 then we skip it
                 if len(index) < 7:
@@ -510,7 +510,17 @@ class AlfenDevice:
                     if self.latest_tag is None:
                         self.latest_tag = {}
                     split = message.split("tag: ", 2)
-                    self.latest_tag["socket " + socket, "start", "tag"] = split[1]
+                    # store the log id in the value, we only override if the id > then the previous id
+                    tag = "socket " + socket, "start", "tag"
+                    taglog = "socket " + socket, "start", "taglog"
+                    if taglog not in self.latest_tag:
+                        self.latest_tag[taglog] = 0
+                    if tag not in self.latest_tag:
+                        self.latest_tag[tag] = None
+
+                    if self.latest_tag[taglog] < int(line_id):
+                        self.latest_tag[taglog] = int(line_id)
+                        self.latest_tag[tag] = split[1]
 
                 # disconnect
                 if (
@@ -524,8 +534,19 @@ class AlfenDevice:
                         socket = "2"
                     if self.latest_tag is None:
                         self.latest_tag = {}
-                    self.latest_tag["socket " + socket, "start", "tag"] = None
-                    _LOGGER.warning(self.latest_tag)
+
+                    # store the log id in the value, we only override if the id > then the previous id
+                    tag = "socket " + socket, "start", "tag"
+                    taglog = "socket " + socket, "start", "taglog"
+                    if taglog not in self.latest_tag:
+                        self.latest_tag[taglog] = 0
+                    if tag not in self.latest_tag:
+                        self.latest_tag[tag] = None
+
+                    if self.latest_tag[taglog] < int(line_id):
+                        self.latest_tag[taglog] = int(line_id)
+                        self.latest_tag[tag] = "No Tag"
+                    # _LOGGER.warning(self.latest_tag)
                 # _LOGGER.debug(message)
         self.logs = []
 
