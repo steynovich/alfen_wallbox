@@ -180,10 +180,9 @@ class AlfenBinarySensor(AlfenEntity, BinarySensorEntity):
         """Return True if entity is available."""
 
         if self.entity_description.api_param is not None:
-            for prop in self.coordinator.device.properties:
-                if prop[ID] == self.entity_description.api_param:
-                    return True
-            return False
+            return (
+                self.entity_description.api_param in self.coordinator.device.properties
+            )
 
         return True
 
@@ -192,9 +191,11 @@ class AlfenBinarySensor(AlfenEntity, BinarySensorEntity):
         """Return True if entity is on."""
 
         if self.entity_description.api_param is not None:
-            for prop in self.coordinator.device.properties:
-                if prop[ID] == self.entity_description.api_param:
-                    return prop[VALUE] == 1
+            if self.entity_description.api_param in self.coordinator.device.properties:
+                prop = self.coordinator.device.properties[
+                    self.entity_description.api_param
+                ]
+                return prop[VALUE] == 1
             return False
 
         if self.entity_description.key == "https_api_login_status":
@@ -205,9 +206,12 @@ class AlfenBinarySensor(AlfenEntity, BinarySensorEntity):
     @property
     def extra_state_attributes(self) -> dict | None:
         """Return the default attributes of the element."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                return {"category": prop[CAT]}
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            return {
+                "category": self.coordinator.device.properties[
+                    self.entity_description.api_param
+                ][CAT],
+            }
 
         if self.entity_description.key == "https_api_login_status":
             return {"last_updated": self.coordinator.device.last_updated}

@@ -102,15 +102,16 @@ class AlfenText(AlfenEntity, TextEntity):
 
     def _get_current_value(self) -> str | None:
         """Return the current value."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                return prop[VALUE]
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            return self.coordinator.device.properties[
+                self.entity_description.api_param
+            ][VALUE]
         return None
 
     async def async_set_value(self, value: str) -> None:
         """Update the value."""
         self._attr_native_value = value
-        await self.coordinator.device.set_value(
+        self.coordinator.device.set_value(
             self.entity_description.api_param, value
         )
         self.async_write_ha_state()
@@ -118,7 +119,10 @@ class AlfenText(AlfenEntity, TextEntity):
     @property
     def extra_state_attributes(self):
         """Return the default attributes of the element."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                return {"category": prop[CAT]}
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            return {
+                "category": self.coordinator.device.properties[
+                    self.entity_description.api_param
+                ][CAT],
+            }
         return None

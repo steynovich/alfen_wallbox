@@ -1655,7 +1655,8 @@ class AlfenMainSensor(AlfenEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        for prop in self.coordinator.device.properties:
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            prop = self.coordinator.device.properties[self.entity_description.api_param]
             if prop[ID] == self.entity_description.api_param:
                 # exception
                 # status only from socket 1
@@ -1672,7 +1673,8 @@ class AlfenMainSensor(AlfenEntity):
     @property
     def extra_state_attributes(self):
         """Return the default attributes of the element."""
-        for prop in self.coordinator.device.properties:
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            prop = self.coordinator.device.properties[self.entity_description.api_param]
             if prop[ID] == self.entity_description.api_param:
                 return {"category": prop[CAT]}
         return None
@@ -1714,9 +1716,10 @@ class AlfenSensor(AlfenEntity, SensorEntity):
 
     def _get_current_value(self) -> StateType | None:
         """Get the current value."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                return prop[VALUE]
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            return self.coordinator.device.properties[
+                self.entity_description.api_param
+            ][VALUE]
         return None
 
     @callback
@@ -1981,18 +1984,19 @@ class AlfenSensor(AlfenEntity, SensorEntity):
             current_l3 = None
 
             for prop in self.coordinator.device.properties:
-                if prop[ID] == "5221_3":
-                    voltage_l1 = prop[VALUE]
-                if prop[ID] == "5221_4":
-                    voltage_l2 = prop[VALUE]
-                if prop[ID] == "5221_5":
-                    voltage_l3 = prop[VALUE]
-                if prop[ID] == "212F_1":
-                    current_l1 = prop[VALUE]
-                if prop[ID] == "212F_2":
-                    current_l2 = prop[VALUE]
-                if prop[ID] == "212F_3":
-                    current_l3 = prop[VALUE]
+                value = self.coordinator.device.properties[prop][VALUE]
+                if prop == "5221_3":
+                    voltage_l1 = value
+                elif prop == "5221_4":
+                    voltage_l2 = value
+                elif prop == "5221_5":
+                    voltage_l3 = value
+                elif prop == "212F_1":
+                    current_l1 = value
+                elif prop == "212F_2":
+                    current_l2 = value
+                elif prop == "212F_3":
+                    current_l3 = value
 
             if self.entity_description.key == "smart_meter_l1":
                 if voltage_l1 is not None and current_l1 is not None:
@@ -2027,115 +2031,114 @@ class AlfenSensor(AlfenEntity, SensorEntity):
             if value is not None:
                 return value
 
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                # some exception of return value
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            prop = self.coordinator.device.properties[self.entity_description.api_param]
+            # some exception of return value
 
-                # Display state status
-                if self.entity_description.api_param in ("3190_1", "3191_1"):
-                    if prop[VALUE] == 28:
-                        return "See error Number"
+            # Display state status
+            if self.entity_description.api_param in ("3190_1", "3191_1"):
+                if prop[VALUE] == 28:
+                    return "See error Number"
 
-                    return STATUS_DICT.get(prop[VALUE], "Unknown")
+                return STATUS_DICT.get(prop[VALUE], "Unknown")
 
-                # meter_reading from w to kWh
-                if self.entity_description.api_param in ("2221_22", "3221_22"):
-                    return round((prop[VALUE] / 1000), 2)
+            # meter_reading from w to kWh
+            if self.entity_description.api_param in ("2221_22", "3221_22"):
+                return round((prop[VALUE] / 1000), 2)
 
-                # Car PWM Duty cycle %
-                if self.entity_description.api_param == "2511_3":
-                    return round(
-                        (prop[VALUE] / 100), self.entity_description.round_digits
-                    )
+            # Car PWM Duty cycle %
+            if self.entity_description.api_param == "2511_3":
+                return round((prop[VALUE] / 100), self.entity_description.round_digits)
 
-                # change milliseconds to HH:MM:SS
-                if self.entity_description.key == "uptime":
-                    return str(datetime.timedelta(milliseconds=prop[VALUE])).split(
-                        ".", maxsplit=1
-                    )[0]
+            # change milliseconds to HH:MM:SS
+            if self.entity_description.key == "uptime":
+                return str(datetime.timedelta(milliseconds=prop[VALUE])).split(
+                    ".", maxsplit=1
+                )[0]
 
-                if self.entity_description.key == "uptime_hours":
-                    result = 0
-                    value = str(datetime.timedelta(milliseconds=prop[VALUE]))
-                    days = value.split(" day")
-                    if len(days) > 1:
-                        result = int(days[0]) * 24
-                        hours = days[1].split(", ")[1].split(":", maxsplit=1)[0]
-                    else:
-                        hours = value.split(":", maxsplit=1)[0]
-                    result += int(hours)
-                    return result
+            if self.entity_description.key == "uptime_hours":
+                result = 0
+                value = str(datetime.timedelta(milliseconds=prop[VALUE]))
+                days = value.split(" day")
+                if len(days) > 1:
+                    result = int(days[0]) * 24
+                    hours = days[1].split(", ")[1].split(":", maxsplit=1)[0]
+                else:
+                    hours = value.split(":", maxsplit=1)[0]
+                result += int(hours)
+                return result
 
-                # change milliseconds to d/m/y HH:MM:SS
-                if self.entity_description.api_param in ("2187_0", "2059_0"):
-                    return datetime.datetime.fromtimestamp(prop[VALUE] / 1000).strftime(
-                        "%d/%m/%Y %H:%M:%S"
-                    )
-                # change milliseconds to HH:MM:SS
-                if self.entity_description.api_param in (
-                    "3600_2",
-                    "3600_3",
-                    "3600_6",
-                    "3600_7",
-                    "3600_8",
-                ):
-                    return datetime.datetime.fromtimestamp(prop[VALUE] / 1000).strftime(
-                        "%H:%M:%S"
-                    )
+            # change milliseconds to d/m/y HH:MM:SS
+            if self.entity_description.api_param in ("2187_0", "2059_0"):
+                return datetime.datetime.fromtimestamp(prop[VALUE] / 1000).strftime(
+                    "%d/%m/%Y %H:%M:%S"
+                )
+            # change milliseconds to HH:MM:SS
+            if self.entity_description.api_param in (
+                "3600_2",
+                "3600_3",
+                "3600_6",
+                "3600_7",
+                "3600_8",
+            ):
+                return datetime.datetime.fromtimestamp(prop[VALUE] / 1000).strftime(
+                    "%H:%M:%S"
+                )
 
-                # Allowed phase 1 or Allowed Phase 2
-                if (self.entity_description.api_param == "312E_0") | (
-                    self.entity_description.api_param == "312F_0"
-                ):
-                    return ALLOWED_PHASE_DICT.get(prop[VALUE], "Unknown")
+            # Allowed phase 1 or Allowed Phase 2
+            if (self.entity_description.api_param == "312E_0") | (
+                self.entity_description.api_param == "312F_0"
+            ):
+                return ALLOWED_PHASE_DICT.get(prop[VALUE], "Unknown")
 
-                if self.entity_description.round_digits is not None:
-                    # check prop[VALUE] if it is an integer
-                    return round(prop[VALUE], self.entity_description.round_digits)
+            if self.entity_description.round_digits is not None:
+                # check prop[VALUE] if it is an integer
+                return round(prop[VALUE], self.entity_description.round_digits)
 
-                # mode3_state
-                if self.entity_description.api_param in ("2501_4", "2502_4"):
-                    return MODE_3_STAT_DICT.get(prop[VALUE], "Unknown")
+            # mode3_state
+            if self.entity_description.api_param in ("2501_4", "2502_4"):
+                return MODE_3_STAT_DICT.get(prop[VALUE], "Unknown")
 
-                # Socket CPRO State
-                if self.entity_description.api_param in ("2501_3", "2502_3"):
-                    return POWER_STATES_DICT.get(prop[VALUE], "Unknown")
+            # Socket CPRO State
+            if self.entity_description.api_param in ("2501_3", "2502_3"):
+                return POWER_STATES_DICT.get(prop[VALUE], "Unknown")
 
-                # Main CSM State
-                if self.entity_description.api_param in ("2501_1", "2502_1"):
-                    return MAIN_STATE_DICT.get(prop[VALUE], "Unknown")
+            # Main CSM State
+            if self.entity_description.api_param in ("2501_1", "2502_1"):
+                return MAIN_STATE_DICT.get(prop[VALUE], "Unknown")
 
-                # OCPP Boot notification
-                if self.entity_description.api_param == "3600_1":
-                    return OCPP_BOOT_NOTIFICATION_STATUS_DICT.get(
-                        prop[VALUE], "Unknown"
-                    )
+            # OCPP Boot notification
+            if self.entity_description.api_param == "3600_1":
+                return OCPP_BOOT_NOTIFICATION_STATUS_DICT.get(prop[VALUE], "Unknown")
 
-                # OCPP Boot notification
-                if self.entity_description.api_param == "2540_0":
-                    return MODBUS_CONNECTION_STATES_DICT.get(prop[VALUE], "Unknown")
+            # OCPP Boot notification
+            if self.entity_description.api_param == "2540_0":
+                return MODBUS_CONNECTION_STATES_DICT.get(prop[VALUE], "Unknown")
 
-                # wallbox display message
-                if self.entity_description.api_param in ("3190_2", "3191_2"):
-                    return (
-                        str(prop[VALUE])
-                        + ": "
-                        + DISPLAY_ERROR_DICT.get(prop[VALUE], "Unknown")
-                    )
+            # wallbox display message
+            if self.entity_description.api_param in ("3190_2", "3191_2"):
+                return (
+                    str(prop[VALUE])
+                    + ": "
+                    + DISPLAY_ERROR_DICT.get(prop[VALUE], "Unknown")
+                )
 
-                # Status code
-                if self.entity_description.api_param in ("2501_2", "2502_2"):
-                    return STATUS_DICT.get(prop[VALUE], "Unknown")
+            # Status code
+            if self.entity_description.api_param in ("2501_2", "2502_2"):
+                return STATUS_DICT.get(prop[VALUE], "Unknown")
 
-                return prop[VALUE]
+            return prop[VALUE]
         return None
 
     @property
     def extra_state_attributes(self):
         """Return the default attributes of the element."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                return {"category": prop[CAT]}
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            return {
+                "category": self.coordinator.device.properties[
+                    self.entity_description.api_param
+                ][CAT]
+            }
         return None
 
     @property

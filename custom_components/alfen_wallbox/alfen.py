@@ -79,11 +79,11 @@ class AlfenDevice:
         self.get_static_properties = True
         self.logged_in = False
         self.last_updated = None
-        self.logs = []
         self.latest_logs = []
         # prevent multiple call to wallbox
         self.lock = False
-        self.update_values = []
+        self.update_values = {}
+        self.updating = False
 
     async def init(self) -> bool:
         """Initialize the Alfen API."""
@@ -97,20 +97,18 @@ class AlfenDevice:
     def get_number_of_sockets(self) -> int | None:
         """Get number of sockets from the properties."""
         sockets = 1
-        for prop in self.properties:
-            if prop[ID] == "205E_0":
-                sockets = int(prop[VALUE])
-                break
+        if "205E_0" in self.properties:
+            sockets = self.properties["205E_0"][VALUE]
         return sockets
 
     def get_licenses(self) -> list | None:
         """Get licenses from the properties."""
         licenses = []
-        for prop in self.properties:
-            if prop[ID] == "21A2_0":
-                for key, value in LICENSES.items():
-                    if int(prop[VALUE]) & int(value):
-                        licenses.append(key)
+        if "21A2_0" in self.properties:
+            prop = self.properties["21A2_0"]
+            for key, value in LICENSES.items():
+                if int(prop[VALUE]) & int(value):
+                    licenses.append(key)
         return licenses
 
     async def get_info(self) -> bool:
@@ -150,32 +148,37 @@ class AlfenDevice:
         """Update the device properties."""
         if self.keep_logout:
             return True
+        if self.updating:
+            return True
 
-        # we update first the self.update_values
-        for update in self.update_values:
-            response = await self._update_value(update["api_param"], update["value"])
+        try:
+            self.updating = True
+            # we update first the self.update_values
+            for value in self.update_values.values():
+                response = await self._update_value(value["api_param"], value["value"])
 
-            if response:
-                # we expect that the value is updated so we are just update the value in the properties
-                for index, prop in enumerate(self.properties):
-                    if prop[ID] == update["api_param"]:
+                if response:
+                    # we expect that the value is updated so we are just update the value in the properties
+                    if value["api_param"] in self.properties:
+                        prop = self.properties[value["api_param"]]
                         _LOGGER.debug(
                             "Set %s value %s",
-                            str(update["api_param"]),
-                            str(update["value"]),
+                            str(value["api_param"]),
+                            str(value["value"]),
                         )
-                        prop[VALUE] = update["value"]
-                        self.properties[index] = prop
-                        break
-                # remove the update from the list
-                self.update_values.remove(update)
-        # if we still have value to update, we return True
-        if self.update_values:
-            return True
+                        prop[VALUE] = value["value"]
+                        self.properties[value["api_param"]] = prop
+                    # remove the update from the list
+            self.update_values = {}
+        except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
+            _LOGGER.error("Unexpected error on update %s", str(e))
+            self.updating = False
+            return False
+        finally:
+            self.updating = False
 
         self.last_updated = datetime.datetime.now()
         dynamic_properties = []
-        self.properties = []
         if self.get_static_properties:
             self.static_properties = []
 
@@ -190,8 +193,18 @@ class AlfenDevice:
                 self.static_properties = (
                     self.static_properties + await self._get_all_properties_value(cat)
                 )
+        self.properties = {}
+        # for each properties (statis and dynamic, use the ID as index)
+        for prop in dynamic_properties:
+            # check if the ID is already in the properties
+            propId = prop[ID]
+            self.properties[propId] = prop
 
-        self.properties = self.static_properties + dynamic_properties
+        for prop in self.static_properties:
+            # check if the ID is already in the properties
+            propId = prop[ID]
+            self.properties[propId] = prop
+
         self.get_static_properties = False
 
         if CAT_LOGS in self.category_options:
@@ -366,16 +379,14 @@ class AlfenDevice:
         """Get a value from the API."""
         cmd = f"{PROP}?{ID}={api_param}"
         response = await self._get(url=self.__get_url(cmd))
-        _LOGGER.debug("Status Response %s: %s", cmd, str(response))
+        # _LOGGER.debug("Status Response %s: %s", cmd, str(response))
 
         if response is not None:
             if self.properties is None:
-                self.properties = []
+                self.properties = {}
             for resp in response[PROPERTIES]:
-                for prop in self.properties:
-                    if prop[ID] == resp[ID]:
-                        prop[VALUE] = resp[VALUE]
-                        break
+                if resp[ID] in self.properties:
+                    self.properties[resp[ID]] = resp
 
     async def _get_all_properties_value(self, category: str) -> list:
         """Get all properties from the API."""
@@ -391,7 +402,7 @@ class AlfenDevice:
             attempt += 1
             cmd = f"{PROP}?{CAT}={category}&{OFFSET}={offset}"
             response = await self._get(url=self.__get_url(cmd))
-            _LOGGER.debug("Status Response %s: %s", cmd, str(response))
+            # _LOGGER.debug("Status Response %s: %s", cmd, str(response))
 
             if response is not None:
                 attempt = 0
@@ -410,7 +421,7 @@ class AlfenDevice:
             else:
                 await asyncio.sleep(5)
 
-        _LOGGER.debug("Properties %s", str(properties))
+        # _LOGGER.debug("Properties %s", str(properties))
         runtime = datetime.datetime.now() - tx_start
         _LOGGER.info("Called %s in %.2f seconds", category, runtime.total_seconds())
         return properties
@@ -449,22 +460,21 @@ class AlfenDevice:
             if line in self.latest_logs:
                 continue
             self.latest_logs.append(line)
-            self.logs.append(line)
-            _LOGGER.debug(line)
+            # _LOGGER.debug(line)
 
         return True
 
     async def _get_log(self):
         """Get the log."""
         log_offset = 0
-
+        self.latest_logs = []
         while await self._fetch_log(log_offset):
             log_offset += 1
             if log_offset > 5:
                 break
 
-        self.logs.reverse()
-        for log in self.logs:
+        self.latest_logs.reverse()
+        for log in self.latest_logs:
             # split on \n
             lines = log.splitlines()
             for linerec in lines:
@@ -548,11 +558,6 @@ class AlfenDevice:
                         self.latest_tag[tag] = "No Tag"
                     # _LOGGER.warning(self.latest_tag)
                 # _LOGGER.debug(message)
-        self.logs = []
-
-        # keep only the latest 100 self.latest_logs
-        if len(self.latest_logs) > 100:
-            self.latest_logs = self.latest_logs[-100:]
 
     async def _get_transaction(self):
         _LOGGER.debug("Get Transaction")
@@ -575,7 +580,7 @@ class AlfenDevice:
                 break
 
             for line in lines:
-                _LOGGER.debug("Line: %s", line)
+                # _LOGGER.debug("Line: %s", line)
                 if line is None:
                     transactionLoop = False
                     break
@@ -661,6 +666,11 @@ class AlfenDevice:
                         # _LOGGER.debug(self.latest_tag)
 
                     elif "dto" in line:
+                        # get the value from begin till _dto
+                        tid = int(splitline[0].split("_", 2)[0])
+                        if tid > offset:
+                            offset = tid
+                            continue
                         offset = offset + 1
                         continue
                     elif "0_Empty" in line:
@@ -717,14 +727,13 @@ class AlfenDevice:
         _LOGGER.debug("Request response %s", str(response))
         return response
 
-    async def set_value(self, api_param, value):
+    def set_value(self, api_param, value):
         """Set a value on the API."""
         # check if the api_param is already in the update_values, update the value
-        for update in self.update_values:
-            if update["api_param"] == api_param:
-                update["value"] = value
-                return
-        self.update_values.append({"api_param": api_param, "value": value})
+        if api_param in self.update_values:
+            self.update_values[api_param]["value"] = value
+            return
+        self.update_values[api_param] = {"api_param": api_param, "value": value}
 
     async def get_value(self, api_param):
         """Get a value from the API."""

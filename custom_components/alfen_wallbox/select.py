@@ -356,7 +356,7 @@ class AlfenSelect(AlfenEntity, SelectEntity):
         """Change the selected option."""
 
         value = {v: k for k, v in self.values_dict.items()}[option]
-        await self.coordinator.device.set_value(
+        self.coordinator.device.set_value(
             self.entity_description.api_param, value
         )
         self.async_write_ha_state()
@@ -370,18 +370,21 @@ class AlfenSelect(AlfenEntity, SelectEntity):
     @property
     def extra_state_attributes(self):
         """Return the default attributes of the element."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                return {"category": prop[CAT]}
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            return {
+                "category": self.coordinator.device.properties[
+                    self.entity_description.api_param
+                ][CAT]
+            }
         return None
 
     def _get_current_option(self) -> str | None:
         """Return the current option."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                if self.entity_description.key == "ps_installation_max_allowed_phase":
-                    self.coordinator.device.max_allowed_phases = prop[VALUE]
-                return prop[VALUE]
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            prop = self.coordinator.device.properties[self.entity_description.api_param]
+            if self.entity_description.key == "ps_installation_max_allowed_phase":
+                self.coordinator.device.max_allowed_phases = prop[VALUE]
+            return prop[VALUE]
         return None
 
     async def async_update(self):
@@ -401,11 +404,11 @@ class AlfenSelect(AlfenEntity, SelectEntity):
     async def async_enable_rfid_auth_mode(self):
         """Enable RFID authorization mode."""
         await self.coordinator.device.set_rfid_auth_mode(True)
-        await self.coordinator.device.set_value(self.entity_description.api_param, 2)
+        self.coordinator.device.set_value(self.entity_description.api_param, 2)
         self.async_write_ha_state()
 
     async def async_disable_rfid_auth_mode(self):
         """Disable RFID authorization mode."""
         await self.coordinator.device.set_rfid_auth_mode(False)
-        await self.coordinator.device.set_value(self.entity_description.api_param, 0)
+        self.coordinator.device.set_value(self.entity_description.api_param, 0)
         self.async_write_ha_state()

@@ -109,9 +109,8 @@ class AlfenFlowHandler(ConfigFlow, domain=DOMAIN):
     async def async_validate_input(self, user_input) -> ConfigFlowResult | None:
         """Validate the input using the Devialet API."""
 
-        for entry in self._async_current_entries():
-            if entry.data[CONF_HOST] == user_input[CONF_HOST]:
-                return self.async_abort(reason="already_configured")
+        if user_input[CONF_HOST] in self._async_current_entries():
+            return self.async_abort(reason="already_configured")
 
         return self.async_create_entry(
             title=user_input[CONF_HOST],

@@ -626,12 +626,12 @@ class AlfenNumber(AlfenEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         if self.entity_description.round_digits is not None:
-            await self.coordinator.device.set_value(
+            self.coordinator.device.set_value(
                 self.entity_description.api_param,
                 round(float(value), self.entity_description.round_digits),
             )
         else:
-            await self.coordinator.device.set_value(
+            self.coordinator.device.set_value(
                 self.entity_description.api_param, int(value)
             )
         self._set_current_option()
@@ -639,32 +639,35 @@ class AlfenNumber(AlfenEntity, NumberEntity):
     @property
     def extra_state_attributes(self):
         """Return the default attributes of the element."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                return {"category": prop[CAT]}
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            return {
+                "category": self.coordinator.device.properties[
+                    self.entity_description.api_param
+                ][CAT]
+            }
+
         return None
 
     def _get_current_option(self) -> str | None:
         """Return the current option."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                _LOGGER.debug("%s Value: %s", self.entity_description.name, prop[VALUE])
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            # _LOGGER.debug("%s Value: %s", self.entity_description.name, prop[VALUE])
+            prop = self.coordinator.device.properties[self.entity_description.api_param]
+            if self.entity_description.round_digits is not None:
+                return round(prop[VALUE], self.entity_description.round_digits)
 
-                if self.entity_description.round_digits is not None:
-                    return round(prop[VALUE], self.entity_description.round_digits)
+            # change comfort level depends on max allowed phase
+            if self.entity_description.key == "lb_solar_charging_comfort_level":
+                if self.coordinator.device.max_allowed_phases == 3:
+                    self._attr_max_value = self.entity_description.native_max_value
+                    self._attr_native_max_value = (
+                        self.entity_description.native_max_value
+                    )
+                else:
+                    self._attr_max_value = 3300
+                    self._attr_native_max_value = 3300
 
-                # change comfort level depends on max allowed phase
-                if self.entity_description.key == "lb_solar_charging_comfort_level":
-                    if self.coordinator.device.max_allowed_phases == 3:
-                        self._attr_max_value = self.entity_description.native_max_value
-                        self._attr_native_max_value = (
-                            self.entity_description.native_max_value
-                        )
-                    else:
-                        self._attr_max_value = 3300
-                        self._attr_native_max_value = 3300
-
-                return prop[VALUE]
+            return prop[VALUE]
         return None
 
     def _set_current_option(self):

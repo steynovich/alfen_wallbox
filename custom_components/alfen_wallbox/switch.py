@@ -132,26 +132,26 @@ class AlfenSwitchSensor(AlfenEntity, SwitchEntity):
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                return True
-        return False
+        return self.entity_description.api_param in self.coordinator.device.properties
 
     @property
     def is_on(self) -> bool:
         """Return True if entity is on."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                return prop[VALUE] in [1, 3]
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            prop = self.coordinator.device.properties[self.entity_description.api_param]
+            return prop[VALUE] in [1, 3]
 
         return False
 
     @property
     def extra_state_attributes(self):
         """Return the default attributes of the element."""
-        for prop in self.coordinator.device.properties:
-            if prop[ID] == self.entity_description.api_param:
-                return {"category": prop[CAT]}
+        if self.entity_description.api_param in self.coordinator.device.properties:
+            return {
+                "category": self.coordinator.device.properties[
+                    self.entity_description.api_param
+                ][CAT],
+            }
         return None
 
     async def async_turn_on(self, **kwargs: Any) -> None:
@@ -162,14 +162,12 @@ class AlfenSwitchSensor(AlfenEntity, SwitchEntity):
         else:
             on_value = 1
 
-        await self.coordinator.device.set_value(
-            self.entity_description.api_param, on_value
-        )
+        self.coordinator.device.set_value(self.entity_description.api_param, on_value)
         await self.coordinator.device.async_update()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the entity off."""
-        await self.coordinator.device.set_value(self.entity_description.api_param, 0)
+        self.coordinator.device.set_value(self.entity_description.api_param, 0)
         await self.coordinator.device.async_update()
 
     async def async_enable_phase_switching(self):
