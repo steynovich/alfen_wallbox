@@ -154,7 +154,10 @@ class AlfenDevice:
         try:
             self.updating = True
             # we update first the self.update_values
-            for value in self.update_values.values():
+            # copy the values to other dict
+            # we need to copy the values to avoid the dict changed size error
+            values = self.update_values.copy()
+            for value in values.values():
                 response = await self._update_value(value["api_param"], value["value"])
 
                 if response:
@@ -169,7 +172,7 @@ class AlfenDevice:
                         prop[VALUE] = value["value"]
                         self.properties[value["api_param"]] = prop
                     # remove the update from the list
-            self.update_values = {}
+                    del self.update_values[value["api_param"]]
         except Exception as e:  # pylint: disable=broad-except  # noqa: BLE001
             _LOGGER.error("Unexpected error on update %s", str(e))
             self.updating = False
@@ -734,6 +737,8 @@ class AlfenDevice:
             self.update_values[api_param]["value"] = value
             return
         self.update_values[api_param] = {"api_param": api_param, "value": value}
+        # force update
+        asyncio.run_coroutine_threadsafe(self.async_update(), self._session.loop)
 
     async def get_value(self, api_param):
         """Get a value from the API."""
