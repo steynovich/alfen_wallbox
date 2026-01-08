@@ -426,7 +426,7 @@ class AlfenDevice:
 
         # _LOGGER.debug("Properties %s", str(properties))
         runtime = datetime.datetime.now() - tx_start
-        _LOGGER.info("Called %s in %.2f seconds", category, runtime.total_seconds())
+        _LOGGER.debug("Called %s in %.2f seconds", category, runtime.total_seconds())
         return properties
 
     async def reboot_wallbox(self):
