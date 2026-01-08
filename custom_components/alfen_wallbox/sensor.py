@@ -214,7 +214,7 @@ MAIN_STATE_DICT: Final[dict[int, str]] = {
     40: "Error Charging RCD Signaled",
     41: "Charging Power Off Ventilating",
     42: "Charging Power Off Suspended",
-    43: "Charging Pwoer OFf Phase Change",
+    43: "Charging Power Off Phase Change",
     44: "Wait for Start Metervalue",
     45: "Wait for Stop Metervalue",
     46: "Error Socket Motor",
