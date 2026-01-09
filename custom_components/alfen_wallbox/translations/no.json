@@ -2,174 +2,174 @@
     "config": {
         "step": {
             "user": {
-                "title": "Configure Alfen Wallbox",
-                "description": "Enter IP address and credentials of your Alfen Wallbox.",
+                "title": "Konfigurer Alfen Wallbox",
+                "description": "Skriv inn IP-adresse og påloggingsinformasjon for din Alfen Wallbox.",
                 "data": {
-                    "host": "Host",
-                    "name": "Friendly name",
-                    "username": "Username",
-                    "password": "Password"
+                    "host": "Vert",
+                    "name": "Navn",
+                    "username": "Brukernavn",
+                    "password": "Passord"
                 }
             },
             "reconfigure": {
-                "title": "Reconfigure Alfen Wallbox",
-                "description": "Update connection settings for your Alfen Wallbox.",
+                "title": "Rekonfigurer Alfen Wallbox",
+                "description": "Oppdater tilkoblingsinnstillinger for din Alfen Wallbox.",
                 "data": {
-                    "host": "Host",
-                    "username": "Username",
-                    "password": "Password"
+                    "host": "Vert",
+                    "username": "Brukernavn",
+                    "password": "Passord"
                 }
             }
         },
         "abort": {
-            "device_timeout": "Timeout connecting to the device.",
-            "device_fail": "Unexpected error creating device.",
-            "already_configured": "Device is already configured",
-            "reconfigure_successful": "Reconfiguration successful"
+            "device_timeout": "Tidsavbrudd ved tilkobling til enheten.",
+            "device_fail": "Uventet feil ved oppretting av enhet.",
+            "already_configured": "Enheten er allerede konfigurert",
+            "reconfigure_successful": "Rekonfigurasjon vellykket"
         },
         "error": {
-            "cannot_connect": "Failed to connect to the wallbox",
-            "invalid_auth": "Invalid authentication credentials"
+            "cannot_connect": "Kunne ikke koble til wallboxen",
+            "invalid_auth": "Ugyldig påloggingsinformasjon"
         }
     },
     "options": {
         "step": {
             "init": {
                 "data": {
-                    "scan_interval": "Scan interval (seconds)",
-                    "timeout": "Timeout (seconds)",
-                    "categories_per_cycle": "Categories per cycle",
-                    "category_fetch_delay": "Category fetch delay (seconds)",
-                    "refresh_categories": "Categories to refresh"
+                    "scan_interval": "Oppdateringsintervall (sekunder)",
+                    "timeout": "Tidsavbrudd (sekunder)",
+                    "categories_per_cycle": "Kategorier per syklus",
+                    "category_fetch_delay": "Forsinkelse mellom kategorier (sekunder)",
+                    "refresh_categories": "Kategorier å oppdatere"
                 },
                 "data_description": {
-                    "scan_interval": "How often to update data from the wallbox (1-300 seconds)",
-                    "timeout": "Request timeout for API calls (1-30 seconds)",
-                    "categories_per_cycle": "Number of property categories to fetch per update cycle (1-15)",
-                    "category_fetch_delay": "Delay between category fetches to reduce wallbox load (0-5 seconds)",
-                    "refresh_categories": "Select the categories to update periodically (others load once at startup)"
+                    "scan_interval": "Hvor ofte data oppdateres fra wallboxen (1-300 sekunder)",
+                    "timeout": "Tidsavbrudd for API-kall (1-30 sekunder)",
+                    "categories_per_cycle": "Antall egenskapskategorier å hente per oppdateringssyklus (1-15)",
+                    "category_fetch_delay": "Forsinkelse mellom kategorihenting for å redusere wallboxens belastning (0-5 sekunder)",
+                    "refresh_categories": "Velg kategorier å oppdatere periodisk (andre lastes én gang ved oppstart)"
                 }
             }
         }
     },
     "services": {
         "reboot_wallbox": {
-            "name": "Reboot wallbox",
-            "description": "Reboots the Alfen wallbox.",
+            "name": "Start wallbox på nytt",
+            "description": "Starter Alfen wallboxen på nytt.",
             "fields": {
                 "entity_id": {
-                    "name": "Entity",
-                    "description": "The wallbox entity to reboot."
+                    "name": "Entitet",
+                    "description": "Wallbox-entiteten som skal startes på nytt."
                 }
             }
         },
         "set_current_limit": {
-            "name": "Set current limit",
-            "description": "Sets the charging current limit.",
+            "name": "Sett strømgrense",
+            "description": "Setter ladestrømgrensen.",
             "fields": {
                 "entity_id": {
-                    "name": "Entity",
-                    "description": "The current limit entity to change."
+                    "name": "Entitet",
+                    "description": "Strømgrense-entiteten som skal endres."
                 },
                 "limit": {
-                    "name": "Limit",
-                    "description": "The new current limit in Amperes (1-32A)."
+                    "name": "Grense",
+                    "description": "Den nye strømgrensen i Ampere (1-32A)."
                 }
             }
         },
         "enable_rfid_authorization_mode": {
-            "name": "Enable RFID authorization",
-            "description": "Enables RFID authorization mode.",
+            "name": "Aktiver RFID-autorisasjon",
+            "description": "Aktiverer RFID-autorisasjonsmodus.",
             "fields": {
                 "entity_id": {
-                    "name": "Entity",
-                    "description": "The authorization mode entity to change."
+                    "name": "Entitet",
+                    "description": "Autorisasjonsmodus-entiteten som skal endres."
                 }
             }
         },
         "disable_rfid_authorization_mode": {
-            "name": "Disable RFID authorization",
-            "description": "Disables RFID authorization mode.",
+            "name": "Deaktiver RFID-autorisasjon",
+            "description": "Deaktiverer RFID-autorisasjonsmodus.",
             "fields": {
                 "entity_id": {
-                    "name": "Entity",
-                    "description": "The authorization mode entity to change."
+                    "name": "Entitet",
+                    "description": "Autorisasjonsmodus-entiteten som skal endres."
                 }
             }
         },
         "set_current_phase": {
-            "name": "Set current phase",
-            "description": "Sets the active phase for charging.",
+            "name": "Sett gjeldende fase",
+            "description": "Setter aktiv fase for lading.",
             "fields": {
                 "entity_id": {
-                    "name": "Entity",
-                    "description": "The phase connection entity to change."
+                    "name": "Entitet",
+                    "description": "Fasetilkobling-entiteten som skal endres."
                 },
                 "phase": {
-                    "name": "Phase",
-                    "description": "The phase to use (L1, L2, or L3)."
+                    "name": "Fase",
+                    "description": "Fasen som skal brukes (L1, L2 eller L3)."
                 }
             }
         },
         "enable_phase_switching": {
-            "name": "Enable phase switching",
-            "description": "Enables automatic phase switching.",
+            "name": "Aktiver fasebytte",
+            "description": "Aktiverer automatisk fasebytte.",
             "fields": {
                 "entity_id": {
-                    "name": "Entity",
-                    "description": "The phase switching entity to change."
+                    "name": "Entitet",
+                    "description": "Fasebytte-entiteten som skal endres."
                 }
             }
         },
         "disable_phase_switching": {
-            "name": "Disable phase switching",
-            "description": "Disables automatic phase switching.",
+            "name": "Deaktiver fasebytte",
+            "description": "Deaktiverer automatisk fasebytte.",
             "fields": {
                 "entity_id": {
-                    "name": "Entity",
-                    "description": "The phase switching entity to change."
+                    "name": "Entitet",
+                    "description": "Fasebytte-entiteten som skal endres."
                 }
             }
         },
         "set_green_share": {
-            "name": "Set green share",
-            "description": "Sets the solar green share percentage.",
+            "name": "Sett grønn andel",
+            "description": "Setter solenergiens grønne andel i prosent.",
             "fields": {
                 "entity_id": {
-                    "name": "Entity",
-                    "description": "The green share entity to change."
+                    "name": "Entitet",
+                    "description": "Grønn andel-entiteten som skal endres."
                 },
                 "value": {
-                    "name": "Value",
-                    "description": "The green share percentage (0-100%)."
+                    "name": "Verdi",
+                    "description": "Den grønne andelen i prosent (0-100%)."
                 }
             }
         },
         "set_comfort_power": {
-            "name": "Set comfort power",
-            "description": "Sets the solar comfort power level.",
+            "name": "Sett komforteffekt",
+            "description": "Setter solenergiens komforteffektnivå.",
             "fields": {
                 "entity_id": {
-                    "name": "Entity",
-                    "description": "The comfort power entity to change."
+                    "name": "Entitet",
+                    "description": "Komforteffekt-entiteten som skal endres."
                 },
                 "value": {
-                    "name": "Value",
-                    "description": "The comfort power in Watts (1400-5000W)."
+                    "name": "Verdi",
+                    "description": "Komforteffekten i Watt (1400-5000W)."
                 }
             }
         },
         "get_transactions": {
-            "name": "Get transactions",
-            "description": "Retrieves charging transaction history.",
+            "name": "Hent transaksjoner",
+            "description": "Henter ladetransaksjonshistorikk.",
             "fields": {
                 "start": {
-                    "name": "Start date",
-                    "description": "Start date for transaction filter."
+                    "name": "Startdato",
+                    "description": "Startdato for transaksjonsfilter."
                 },
                 "end": {
-                    "name": "End date",
-                    "description": "End date for transaction filter."
+                    "name": "Sluttdato",
+                    "description": "Sluttdato for transaksjonsfilter."
                 }
             }
         }
@@ -177,210 +177,210 @@
     "entity": {
         "sensor": {
             "status_socket_1": {
-                "name": "Status socket 1"
+                "name": "Status uttak 1"
             },
             "status_socket_2": {
-                "name": "Status socket 2"
+                "name": "Status uttak 2"
             },
             "uptime": {
-                "name": "Uptime"
+                "name": "Oppetid"
             },
             "uptime_seconds": {
-                "name": "Uptime seconds"
+                "name": "Oppetid sekunder"
             },
             "uptime_hours": {
-                "name": "Uptime hours"
+                "name": "Oppetid timer"
             },
             "bootups": {
-                "name": "Boot count"
+                "name": "Antall oppstarter"
             },
             "temperature": {
-                "name": "Temperature"
+                "name": "Temperatur"
             },
             "max_temperature": {
-                "name": "Maximum temperature"
+                "name": "Maksimal temperatur"
             },
             "min_temperature": {
-                "name": "Minimum temperature"
+                "name": "Minimal temperatur"
             },
             "voltage_l1_socket_1": {
-                "name": "Voltage L1 socket 1"
+                "name": "Spenning L1 uttak 1"
             },
             "voltage_l2_socket_1": {
-                "name": "Voltage L2 socket 1"
+                "name": "Spenning L2 uttak 1"
             },
             "voltage_l3_socket_1": {
-                "name": "Voltage L3 socket 1"
+                "name": "Spenning L3 uttak 1"
             },
             "current_l1_socket_1": {
-                "name": "Current L1 socket 1"
+                "name": "Strøm L1 uttak 1"
             },
             "current_l2_socket_1": {
-                "name": "Current L2 socket 1"
+                "name": "Strøm L2 uttak 1"
             },
             "current_l3_socket_1": {
-                "name": "Current L3 socket 1"
+                "name": "Strøm L3 uttak 1"
             },
             "current_total_socket_1": {
-                "name": "Current total socket 1"
+                "name": "Strøm totalt uttak 1"
             },
             "active_power_total_socket_1": {
-                "name": "Active power socket 1"
+                "name": "Aktiv effekt uttak 1"
             },
             "meter_reading_socket_1": {
-                "name": "Meter reading socket 1"
+                "name": "Måleravlesning uttak 1"
             },
             "frequency_socket_1": {
-                "name": "Frequency socket 1"
+                "name": "Frekvens uttak 1"
             },
             "charging_box_identifier": {
-                "name": "Charging box identifier"
+                "name": "Ladeboksidentifikator"
             },
             "boot_reason": {
-                "name": "Boot reason"
+                "name": "Oppstartsårsak"
             },
             "system_date_time": {
-                "name": "System datetime"
+                "name": "Systemdato/tid"
             },
             "last_modify_datetime": {
-                "name": "Last config modified"
+                "name": "Siste konfigurasjon endret"
             }
         },
         "binary_sensor": {
             "system_date_light_savings": {
-                "name": "Daylight savings"
+                "name": "Sommertid"
             },
             "license_scn": {
-                "name": "License: Smart Charging Network"
+                "name": "Lisens: Smart Charging Network"
             },
             "license_active_loadbalancing": {
-                "name": "License: Active load balancing"
+                "name": "Lisens: Aktiv lastbalansering"
             },
             "license_static_loadbalancing": {
-                "name": "License: Static load balancing"
+                "name": "Lisens: Statisk lastbalansering"
             },
             "license_high_power_sockets": {
-                "name": "License: 32A output"
+                "name": "Lisens: 32A utgang"
             },
             "license_rfid_reader": {
-                "name": "License: RFID reader"
+                "name": "Lisens: RFID-leser"
             },
             "license_personalized_display": {
-                "name": "License: Personalized display"
+                "name": "Lisens: Personlig skjerm"
             },
             "license_mobile_3g_4g": {
-                "name": "License: Mobile 3G/4G"
+                "name": "Lisens: Mobil 3G/4G"
             },
             "license_giro_e": {
-                "name": "License: Giro-e payment"
+                "name": "Lisens: Giro-e betaling"
             },
             "https_api_login_status": {
-                "name": "API login status"
+                "name": "API-innloggingsstatus"
             }
         },
         "number": {
             "alb_safe_current": {
-                "name": "Load balancing safe current"
+                "name": "Lastbalansering sikker strøm"
             },
             "main_normal_max_current_socket_1": {
-                "name": "Max current socket 1"
+                "name": "Maks strøm uttak 1"
             },
             "max_station_current": {
-                "name": "Max station current"
+                "name": "Maks stasjonsstrøm"
             },
             "lb_max_smart_meter_current": {
-                "name": "Max smart meter current"
+                "name": "Maks smartmåler strøm"
             },
             "lb_solar_charging_green_share": {
-                "name": "Solar green share"
+                "name": "Sol grønn andel"
             },
             "lb_solar_charging_comfort_level": {
-                "name": "Solar comfort level"
+                "name": "Sol komfortnivå"
             },
             "dp_light_intensity": {
-                "name": "Display brightness"
+                "name": "Skjermlysstyrke"
             },
             "heartbeat_interval": {
-                "name": "Heartbeat interval"
+                "name": "Heartbeat-intervall"
             }
         },
         "select": {
             "lb_solar_charging_mode": {
-                "name": "Solar charging mode"
+                "name": "Sollademodus"
             },
             "lb_phase_connection": {
-                "name": "Phase connection"
+                "name": "Fasetilkobling"
             },
             "auth_mode": {
-                "name": "Authorization mode"
+                "name": "Autorisasjonsmodus"
             },
             "load_balancing_protocol": {
-                "name": "Load balancing protocol"
+                "name": "Lastbalanseringsprotokoll"
             },
             "display_language": {
-                "name": "Display language"
+                "name": "Skjermspråk"
             }
         },
         "switch": {
             "lb_enable_phase_switching": {
-                "name": "Phase switching"
+                "name": "Fasebytte"
             },
             "dp_light_auto_dim": {
-                "name": "Display auto dim"
+                "name": "Skjerm auto-dim"
             },
             "lb_solar_charging_boost": {
-                "name": "Solar charging boost"
+                "name": "Sollading boost"
             },
             "active_load_balancing": {
-                "name": "Active load balancing"
+                "name": "Aktiv lastbalansering"
             },
             "auth_white_list": {
-                "name": "Whitelist enabled"
+                "name": "Hvitliste aktivert"
             },
             "proxy_enabled": {
-                "name": "Proxy enabled"
+                "name": "Proxy aktivert"
             }
         },
         "button": {
             "reboot_wallbox": {
-                "name": "Reboot"
+                "name": "Start på nytt"
             },
             "auth_logout": {
-                "name": "API logout"
+                "name": "API-utlogging"
             },
             "auth_login": {
-                "name": "API login"
+                "name": "API-innlogging"
             },
             "wallbox_force_update": {
-                "name": "Force update"
+                "name": "Tving oppdatering"
             },
             "clear_transaction": {
-                "name": "Clear transactions"
+                "name": "Tøm transaksjoner"
             }
         },
         "text": {
             "auth_plug_and_charge_id": {
-                "name": "Plug & charge ID"
+                "name": "Plug & Charge-ID"
             },
             "proxy_address_port": {
-                "name": "Proxy address"
+                "name": "Proxyadresse"
             },
             "proxy_username": {
-                "name": "Proxy username"
+                "name": "Proxybrukernavn"
             },
             "proxy_password": {
-                "name": "Proxy password"
+                "name": "Proxypassord"
             }
         }
     },
     "issues": {
         "connection_failed": {
-            "title": "Connection to wallbox failed",
-            "description": "Unable to connect to the Alfen wallbox at {host}. Please check that the wallbox is powered on and accessible on the network."
+            "title": "Tilkobling til wallbox mislyktes",
+            "description": "Kan ikke koble til Alfen wallboxen på {host}. Kontroller at wallboxen er påslått og tilgjengelig i nettverket."
         },
         "authentication_failed": {
-            "title": "Authentication failed",
-            "description": "Unable to authenticate with the Alfen wallbox. Please verify your username and password in the integration settings."
+            "title": "Autentisering mislyktes",
+            "description": "Kan ikke autentisere med Alfen wallboxen. Kontroller brukernavn og passord i integrasjonsinnstillingene."
         }
     }
 }
